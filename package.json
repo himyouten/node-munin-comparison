@@ -1,0 +1,14 @@
+{
+  "name": "hyt_app",
+  "description": "my app",
+  "version": "0.0.1",
+  "private": true,
+  "main": "./app",
+  "dependencies": {
+    "nconf": "*",
+    "js-yaml": "*",
+    "winston": "*",
+    "express": "3.x",
+    "express-hbs": "*"
+  }
+}
