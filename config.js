@@ -20,8 +20,8 @@ if (conf_file != undefined && conf_file.length > 0) {
     if (conf_file.substr(conf_file.length-4) == ".yml"){
         // Get document, or throw exception on error
         try {
-          var doc = yaml.safeLoad(fs.readFileSync(conf_file, 'utf8'));
-          nconf.overrides(doc);
+          var json = yaml.safeLoad(fs.readFileSync(conf_file, 'utf8'));
+          nconf.overrides(json);
         } catch (e) {
             logger.log("error", e);
         }
