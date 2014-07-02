@@ -1,0 +1,157 @@
+{{#contentFor 'pageStyles'}}
+<style>
+.graph-container {
+	box-sizing: border-box;
+	width: 850px;
+	height: 450px;
+	padding: 20px 15px 15px 15px;
+	margin: 15px auto 30px auto;
+	border: 1px solid #ddd;
+	background: #fff;
+	background: linear-gradient(#f6f6f6 0, #fff 50px);
+	background: -o-linear-gradient(#f6f6f6 0, #fff 50px);
+	background: -ms-linear-gradient(#f6f6f6 0, #fff 50px);
+	background: -moz-linear-gradient(#f6f6f6 0, #fff 50px);
+	background: -webkit-linear-gradient(#f6f6f6 0, #fff 50px);
+	box-shadow: 0 3px 10px rgba(0,0,0,0.15);
+	-o-box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+	-ms-box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+	-moz-box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+	-webkit-box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+}
+
+.flot-graph-container {
+	width: 100%;
+	height: 100%;
+	font-size: 14px;
+	line-height: 1.2em;
+}
+
+.legend table {
+	border-spacing: 5px;
+}</style>
+{{/contentFor}}
+
+
+{{#contentFor 'pageScripts'}}
+<script language="javascript" type="text/javascript" src="/public/js/flot/jquery.flot.min.js"></script>
+<script language="javascript" type="text/javascript" src="/public/js/flot/jquery.flot.selection.min.js"></script>
+<script language="javascript" type="text/javascript" src="/public/js/flot/jquery.flot.time.min.js"></script>
+<script>
+  $(function() {
+		var options = {
+			lines: {
+				show: true
+			},
+			points: {
+				show: true
+			},
+			selection: {
+				mode: "x"
+			},			
+			xaxis: {
+				mode: "time",
+				minTickSize: [1, "hour"],
+				twelveHourClock: true
+			}
+		};
+
+		var flotGraph = $("#flot-graph");
+
+		flotGraph.bind("plotselected", function (event, ranges) {
+			$("#selection").text(ranges.xaxis.from.toFixed(1) + " to " + ranges.xaxis.to.toFixed(1));
+			$.each(plot.getXAxes(), function(_, axis) {
+				var opts = axis.options;
+				console.log('min:'+opts.min+' max:'+opts.max);
+				opts.min = ranges.xaxis.from;
+				opts.max = ranges.xaxis.to;
+			});
+			plot.setupGrid();
+			plot.draw();
+			plot.clearSelection();
+		});
+
+		flotGraph.bind("plotunselected", function (event) {
+			$("#selection").text("");
+			$.each(plot.getXAxes(), function(_, axis) {
+				var opts = axis.options;
+				opts.min = ranges.xaxis.from;
+				opts.max = ranges.xaxis.to;
+			});
+			plot.setupGrid();
+			plot.draw();
+			plot.clearSelection();
+		});
+
+		var data = [];
+
+		var plot = $.plot(flotGraph, data, options);
+
+		$("#clearSelection").click(function () {
+			plot.clearSelection();
+		});
+
+		// // Fetch one series, adding to what we already have
+
+		var alreadyFetched = {};
+
+		$("button.fetchSeries").click(function () {
+			var button = $(this);
+
+			// Find the URL in the link right next to us, then fetch the data
+
+			var dataurl = button.siblings("a").attr("href");
+
+			function onDataReceived(series) {
+
+				// Extract the first coordinate pair; jQuery has parsed it, so
+				// the data is now just an ordinary JavaScript object
+
+				var firstcoordinate = "(" + series.data[0][0] + ", " + series.data[0][1] + ")";
+				button.siblings("span").text("Fetched " + series.label + ", first point: " + firstcoordinate);
+
+				// Push the new data onto our existing data array
+
+				if (!alreadyFetched[series.label]) {
+					alreadyFetched[series.label] = true;
+					data.push(series);
+				}
+
+				plot = $.plot("#flot-graph", data, options);
+			}
+
+			$.ajax({
+				url: dataurl,
+				type: "GET",
+				dataType: "json",
+				success: onDataReceived
+			});
+		});
+
+		// Load the first series by default, so we don't have an empty plot
+
+		// $("button.fetchSeries:first").click();
+
+  });
+</script>
+{{/contentFor}}
+
+
+<div id="content">
+<h1>{{title}}</h1>
+<div class="graph-container">
+	<div id="flot-graph" class="flot-graph-container"></div>
+</div>
+<p>You selected: <span id="selection"></span></p>
+
+<p>
+	<button class="fetchSeries">vcpcs1-nginx_request-request-d</button>
+	[ <a href="/rrd/vcpcs1-nginx_request-request-d.rrd">see data</a> ]
+	<span></span>
+</p>
+<p>
+	<button class="fetchSeries">vcpcs2-nginx_request-request-d</button>
+	[ <a href="/rrd/vcpcs2-nginx_request-request-d.rrd">see data</a> ]
+	<span></span>
+</p>
+</div>

@@ -4,7 +4,7 @@ var app = express();
 var hbs = require('express-hbs');
 
 // set up static
-app.use(express.static(__dirname + '/public'));
+app.use("/public", express.static(__dirname + '/public'));
 
 // Hook in express-hbs and tell it where known directories reside
 var viewsDir = __dirname + '/views';

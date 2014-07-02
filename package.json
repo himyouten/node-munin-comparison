@@ -9,6 +9,7 @@
     "js-yaml": "*",
     "winston": "*",
     "express": "3.x",
-    "express-hbs": "*"
+    "express-hbs": "*",
+    "rrd": "*"
   }
 }

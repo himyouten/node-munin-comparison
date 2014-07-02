@@ -1,0 +1,274 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+	<title>Flot Examples: AJAX</title>
+	<style>
+	* {	padding: 0; margin: 0; vertical-align: top; }
+
+	body {
+		background: url(background.png) repeat-x;
+		font: 18px/1.5em "proxima-nova", Helvetica, Arial, sans-serif;
+	}
+
+	a {	color: #069; }
+	a:hover { color: #28b; }
+
+	h2 {
+		margin-top: 15px;
+		font: normal 32px "omnes-pro", Helvetica, Arial, sans-serif;
+	}
+
+	h3 {
+		margin-left: 30px;
+		font: normal 26px "omnes-pro", Helvetica, Arial, sans-serif;
+		color: #666;
+	}
+
+	p {
+		margin-top: 10px;
+	}
+
+	button {
+		font-size: 18px;
+		padding: 1px 7px;
+	}
+
+	input {
+		font-size: 18px;
+	}
+
+	input[type=checkbox] {
+		margin: 7px;
+	}
+
+	#header {
+		position: relative;
+		width: 900px;
+		margin: auto;
+	}
+
+	#header h2 {
+		margin-left: 10px;
+		vertical-align: middle;
+		font-size: 42px;
+		font-weight: bold;
+		text-decoration: none;
+		color: #000;
+	}
+
+	#content {
+		width: 880px;
+		margin: 0 auto;
+		padding: 10px;
+	}
+
+	#footer {
+		margin-top: 25px;
+		margin-bottom: 10px;
+		text-align: center;
+		font-size: 12px;
+		color: #999;
+	}
+
+	.demo-container {
+		box-sizing: border-box;
+		width: 850px;
+		height: 450px;
+		padding: 20px 15px 15px 15px;
+		margin: 15px auto 30px auto;
+		border: 1px solid #ddd;
+		background: #fff;
+		background: linear-gradient(#f6f6f6 0, #fff 50px);
+		background: -o-linear-gradient(#f6f6f6 0, #fff 50px);
+		background: -ms-linear-gradient(#f6f6f6 0, #fff 50px);
+		background: -moz-linear-gradient(#f6f6f6 0, #fff 50px);
+		background: -webkit-linear-gradient(#f6f6f6 0, #fff 50px);
+		box-shadow: 0 3px 10px rgba(0,0,0,0.15);
+		-o-box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+		-ms-box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+		-moz-box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+		-webkit-box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+	}
+
+	.demo-placeholder {
+		width: 100%;
+		height: 100%;
+		font-size: 14px;
+		line-height: 1.2em;
+	}
+
+	.legend table {
+		border-spacing: 5px;
+	}
+	</style>
+	<!--[if lte IE 8]><script language="javascript" type="text/javascript" src="../../excanvas.min.js"></script><![endif]-->
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+	<script language="javascript" type="text/javascript" src="/public/js/flot/jquery.flot.min.js"></script>
+	<script language="javascript" type="text/javascript" src="/public/js/flot/jquery.flot.time.min.js"></script>
+	<script type="text/javascript">
+
+	$(function() {
+
+		var options = {
+			lines: {
+				show: true
+			},
+			points: {
+				show: true
+			},
+			xaxis: {
+				mode: "time",
+				minTickSize: [1, "hour"],
+				twelveHourClock: true
+			}
+		};
+
+		var data = [];
+
+		$.plot("#placeholder", data, options);
+
+		// Fetch one series, adding to what we already have
+
+		var alreadyFetched = {};
+
+		$("button.fetchSeries").click(function () {
+
+			var button = $(this);
+
+			// Find the URL in the link right next to us, then fetch the data
+
+			var dataurl = button.siblings("a").attr("href");
+
+			function onDataReceived(series) {
+
+				// Extract the first coordinate pair; jQuery has parsed it, so
+				// the data is now just an ordinary JavaScript object
+
+				var firstcoordinate = "(" + series.data[0][0] + ", " + series.data[0][1] + ")";
+				button.siblings("span").text("Fetched " + series.label + ", first point: " + firstcoordinate);
+
+				// Push the new data onto our existing data array
+
+				if (!alreadyFetched[series.label]) {
+					alreadyFetched[series.label] = true;
+					data.push(series);
+				}
+
+				$.plot("#placeholder", data, options);
+			}
+
+			$.ajax({
+				url: dataurl,
+				type: "GET",
+				dataType: "json",
+				success: onDataReceived
+			});
+		});
+
+		// Initiate a recurring data update
+
+		$("button.dataUpdate").click(function () {
+
+			data = [];
+			alreadyFetched = {};
+
+			$.plot("#placeholder", data, options);
+
+			var iteration = 0;
+
+			function fetchData() {
+
+				++iteration;
+
+				function onDataReceived(series) {
+
+					// Load all the data in one pass; if we only got partial
+					// data we could merge it with what we already have.
+
+					data = [ series ];
+					$.plot("#placeholder", data, options);
+				}
+
+				// Normally we call the same URL - a script connected to a
+				// database - but in this case we only have static example
+				// files, so we need to modify the URL.
+
+				$.ajax({
+					url: "data-eu-gdp-growth-" + iteration + ".json",
+					type: "GET",
+					dataType: "json",
+					success: onDataReceived
+				});
+
+				if (iteration < 5) {
+					setTimeout(fetchData, 1000);
+				} else {
+					data = [];
+					alreadyFetched = {};
+				}
+			}
+
+			setTimeout(fetchData, 1000);
+		});
+
+		// Load the first series by default, so we don't have an empty plot
+
+		$("button.fetchSeries:first").click();
+
+		// Add the Flot version string to the footer
+
+		$("#footer").prepend("Flot " + $.plot.version + " &ndash; ");
+	});
+
+	</script>
+</head>
+<body>
+
+	<div id="header">
+		<h2>AJAX</h2>
+	</div>
+
+	<div id="content">
+
+		<div class="demo-container">
+			<div id="placeholder" class="demo-placeholder"></div>
+		</div>
+
+		<p>Example of loading data dynamically with AJAX. Percentage change in GDP (source: <a href="http://epp.eurostat.ec.europa.eu/tgm/table.do?tab=table&init=1&plugin=1&language=en&pcode=tsieb020">Eurostat</a>). Click the buttons below:</p>
+
+		<p>The data is fetched over HTTP, in this case directly from text files. Usually the URL would point to some web server handler (e.g. a PHP page or Java/.NET/Python/Ruby on Rails handler) that extracts it from a database and serializes it to JSON.</p>
+
+		<p>
+			<button class="fetchSeries">First dataset</button>
+			[ <a href="/rrd2/vcpcs1-nginx_request-request-d.rrd">see data</a> ]
+			<span></span>
+		</p>
+
+		<p>
+			<button class="fetchSeries">Second dataset</button>
+			[ <a href="/rrd2/vcpcs2-nginx_request-request-d.rrd">see data</a> ]
+			<span></span>
+		</p>
+
+		<p>
+			<button class="fetchSeries">Third dataset</button>
+			[ <a href="data-usa-gdp-growth.json">see data</a> ]
+			<span></span>
+		</p>
+
+		<p>If you combine AJAX with setTimeout, you can poll the server for new data.</p>
+
+		<p>
+			<button class="dataUpdate">Poll for data</button>
+		</p>
+
+	</div>
+
+	<div id="footer">
+		Copyright &copy; 2007 - 2014 IOLA and Ole Laursen
+	</div>
+
+</body>
+</html>
