@@ -10,6 +10,7 @@ exports.homepage = function(req, res){
 exports.graph = function(req, res){
     logger.log("info","graph rendered");
     res.render('graph', {
-      title: 'Graph'
+      nav: {compare: 1},
+      title: 'Compare'
     });
 }
