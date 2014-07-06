@@ -25,6 +25,7 @@ munin rrd data format:
 **/
 var logger = require('winston');
 var RRD = require('rrd').RRD;
+var Datafile = require('../lib/munin-datafile');
 
 var rrdUtils = {
     timeRanges : {
@@ -81,9 +82,9 @@ var rrdUtils = {
     }
 }
 
-var info = function(req, res){
-    res.set("Connection", "close");
-    var rrd = new RRD('./datafiles/'+req.params.rrdfile);
+var rrd = function(req, res){
+    var rrd = new RRD('./datafiles/'+req.params[0]);
+    logger.log("info", "rrd:%s", req.params[0]);
     var timeRange = rrdUtils.getTimeRange(req.query['timeRange']);
     var endDate = rrdUtils.getEndDate(req.query['startdatetime']);
     var startDate = rrdUtils.getStartDate(req.query['startdatetime'], endDate, timeRange.val, timeRange.type);
@@ -95,14 +96,14 @@ var info = function(req, res){
     logger.log("info", "start: %s end:%s", startTime, endTime);
     rrd.fetch(startTime, endTime, function(err, results) {
       if (err) {
-        logger.log("error", "error fetching %s: %s", req.params.rrdfile, err);
+        logger.log("error", "error fetching %s: %s", req.params[0], err);
       } else {
-        logger.log("info", "result for %s:", req.params.rrdfile);
+        logger.log("info", "result for %s:", req.params[0]);
         var seriesdata = [];
         for (i = 0; i < results.length; i++){
             seriesdata.push([rrdUtils.getJsTime(results[i]['timestamp']), results[i]['42']]);
         }
-        var series = { 'label': req.params.rrdfile, 'data': seriesdata  };
+        var series = { 'label': req.params[0], 'data': seriesdata  };
         res.send(200,series);
         res.end();
         logger.log("info", "cb finished");
@@ -113,5 +114,25 @@ var info = function(req, res){
     // return;
 }
 
+var datagroups = function(req, res){
+    Datafile.getJson(require('path').dirname(require.main.filename)+'/datafiles/datafile', false, function(err, result){
+        res.send(Object.keys(result));
+    })
+}
+
+var dataopts = function(req, res){
+    if (req.query.format == 'selectopts'){
+        Datafile.getSelectopts(require('path').dirname(require.main.filename)+'/datafiles/datafile', false, function(err, result){
+            res.send(result[req.params.group]);
+        })
+    } else {
+        Datafile.getJson(require('path').dirname(require.main.filename)+'/datafiles/datafile', false, function(err, result){
+            res.send(result[req.params.group]);
+        })
+    }
+}
+
 exports.rrdUtils = rrdUtils;
-exports.info = info;
+exports.rrd = rrd;
+exports.dataopts = dataopts;
+exports.datagroups = datagroups;

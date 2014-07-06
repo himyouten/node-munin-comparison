@@ -1,29 +1,12 @@
 {{#contentFor 'pageStyles'}}
-<style>
-  .clicker {
-    color: blue;
-  };
-</style>
 {{/contentFor}}
 
 
 {{#contentFor 'pageScripts'}}
-<script>
-  $(function() {
-    $('.clicker').click(function() {
-      $(this).text('Hello express-hbs!');
-    });
-  });
-</script>
 {{/contentFor}}
 
-{{#contentFor 'replaced-default-block'}}
-    Non-default block content
-{{/contentFor}}
-
-
+<div class="jumbotron">
 <h1>{{title}}</h1>
-<p class='clicker'>Click me! now craig!</p>
-<p>
-  <a href='/fruits'>Favorite fruits</a>
-</p>
+<p class="lead">{{lead}}</p>
+<p><a class="btn btn-lg btn-success" href="/graph" role="button">Compare</a></p>
+</div>

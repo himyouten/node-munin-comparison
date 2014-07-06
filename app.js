@@ -1,12 +1,19 @@
 var path = require('path');
-var config = require('./config');
-var logger = require('./log')(config);
+var config = require('./config/config');
+var logger = require('./config/log')(config);
 
 // load express hbs templates
-var app = require('./express-hbs');
+var app = require('./config/express-hbs');
 
 // load routes
-var routes = require('./routes').load(app);
+var routes = require('./config/routes').load(app);
+
+// load the datafile
+var Datafile = require('./lib/munin-datafile');
+var datafile = new Datafile('./datafiles/datafile');
+datafile.parse();
+
+app.set('datafileJson', datafile.json);
 
 // start the server
 var server = require('http').Server(app);

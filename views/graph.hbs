@@ -82,7 +82,7 @@
 		var fetchData = function(rrddatafile, type) {
 			return $.ajax({ // It's necessary to return ajax call 
 				type: 'GET',
-				url: '/rrd/'+rrddatafile,
+				url: '/data/rrd/'+rrddatafile,
 				data: {timeRange: type},
 				dataType: 'json',
 		    }).done(function(json){
@@ -104,15 +104,44 @@
 			});
 		}
 
+		var setRRDDataSelection = function(datafile){
+			datafile.sort(function(a,b){
+				if (a.text < b.text)
+				     return -1;
+				  if (a.text > b.text)
+				    return 1;
+				  return 0;
+			});
+			// rrdddata selection
+			// set up select2, on change, add to selected
+			$('#rrddata-empty').hide();
+			$("#rrddata").select2({ placeholder: "Select a data series", data: datafile});
+		}
+		
+		var getRRDDataSelection = function(e){
+			var optionSelected = $(e.target).find("option:selected");
+			var val = optionSelected.val();
+			if (val == undefined || val.length == 0){
+				return;
+			}
+			$.getJSON('/data/dataopts/list/'+val+'?format=selectopts').done(setRRDDataSelection);
+		}
+		
+		var setRRDDataGroup = function(groups){
+			groups.sort();
+			$('#rrddata-group').append($("<option>Make a selection</option>"));
+			for (id in groups){
+				$('#rrddata-group').append($("<option></option>").attr("value",groups[id]).text(groups[id]));
+			}
+			$('#rrddata-group').on('change', getRRDDataSelection);
+		}
+
 		// graph range type
 		// set Day as default
 		$('#graph-range-type-group label:first-child').button("toggle");
 		// on change make, redraw
 		$('#graph-range-type-group input').bind('change', graphData);
 		
-		// rrdddata selection
-		// set up select2, on change, add to selected
-		$("#rrddata").select2({ placeholder: "Select a data series" });
 		// bind change - use flot-graph namespace in case of conflict
 		$("#rrddata").bind('change.flot-graph', function(){ 
 			var data = $("#rrddata").select2("data");
@@ -122,8 +151,15 @@
 		$("#rrddata-remove-btn").bind('click', function(){
 			$('#rrddata-selected option:checked').remove();
 		});
+		// clear selected
+		$("#rrddata-clear-btn").bind('click', function(){
+			$('#rrddata-selected option').remove();
+		});
+		// get the dataopts and enable
+		$.getJSON('/data/dataopts/groups').done(setRRDDataGroup);
 		
 		$('#graph-btn').bind('click', graphData);
+		
   });
 </script>
 {{/contentFor}}
@@ -148,19 +184,18 @@
 <div class="row">
 	<p></p>
 	<form id="rrddata-form">
-		<div class="form-group col-sm-5">
-			<label for="rrddata"><h3>Data</h3></label>
-			<select id="rrddata" class="form-control select2">
-				<option value=""></option>
-				<optgroup label="VMP">
-					<option value="vcpcs1-nginx_request-request-d.rrd">vcpcs1: Nginx requests</option>
-					<option value="vcpcs2-nginx_request-request-d.rrd">vcpcs2: Nginx requests</option>
-					<option value="vmpcs1-nginx_request-request-d.rrd">vmpcs1: Nginx requests</option>
-					<option value="vmpcs2-nginx_request-request-d.rrd">vmpcs2: Nginx requests</option>
-				</optgroup>
-			</select>
+		<div class="col-sm-5">
+			<div class="form-group">
+				<label for="rrddata"><h3>Group</h3></label>
+				<select class="form-control" id="rrddata-group"></select>
+			</div>
+			<div class="form-group">
+				<label for="rrddata"><h3>Metric</h3></label>
+				<input type="hidden" id="rrddata" class="form-control"/>
+				<select id="rrddata-empty" class="form-control"></select>
+			</div>
 		</div>
-		  <div class="form-group col-sm-5">
+		<div class="form-group col-sm-5">
 			<label for="rrddata"><h3>Selected</h3></label>
 			<select class="form-control" id="rrddata-selected"  multiple="multiple" size="8"></select>
 		</div>

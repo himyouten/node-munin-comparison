@@ -1,9 +1,11 @@
 var logger = require('winston');
+var datafile = require('../lib/munin-datafile');
 
 exports.homepage = function(req, res){
     logger.log("info","homepage rendered");
     res.render('index', {
-      title: 'express-hbs example'
+      title: 'Goaf Munin Comparison',
+      lead: 'Compare Munin graphs interactively!'
     });
 }
 
