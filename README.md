@@ -26,5 +26,3 @@ _How do I run the project's automated tests?_
 ### Configs and logs
 - Create a config file, format is either JSON or yml, see `config/config-sample.yml` for an example
 - Set the `CONF_FILE` env variable to reference the config file
-
-## License
