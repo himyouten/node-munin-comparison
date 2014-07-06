@@ -10,10 +10,8 @@ var routes = require('./config/routes').load(app);
 
 // load the datafile
 var Datafile = require('./lib/munin-datafile');
-var datafile = new Datafile('./datafiles/datafile');
+var datafile = new Datafile(config.get('datafiles')+'/datafile');
 datafile.parse();
-
-app.set('datafileJson', datafile.json);
 
 // start the server
 var server = require('http').Server(app);

@@ -3,7 +3,8 @@ var DEFAULTS = {
     'logging' : { 
         'console': {'level': 'debug'}, 
         'file': {'level': 'info'} 
-    }
+    },
+    'datafiles' : require('path').dirname(require.main.filename)+'/server_files/datafiles'
 }
 
 var nconf = require('nconf');
@@ -20,17 +21,20 @@ if (conf_file != undefined && conf_file.length > 0) {
     if (conf_file.substr(conf_file.length-4) == ".yml"){
         // Get document, or throw exception on error
         try {
+          logger.log('info', 'confile is yml');
           var json = yaml.safeLoad(fs.readFileSync(conf_file, 'utf8'));
           nconf.overrides(json);
         } catch (e) {
             logger.log("error", e);
         }
     } else {
-        nconf.file(nconf.get("CONF_FILE"));
+        nconf.file(conf_file);
     }
+    logger.log('info', 'confile:%s loaded', conf_file);
 }
 
 // Provide default values for settings not provided above.
 nconf.defaults(DEFAULTS);
+logger.log('info', 'confile datafiles:%s set', nconf.get('datafiles'));
 
 module.exports = nconf;

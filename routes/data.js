@@ -26,6 +26,7 @@ munin rrd data format:
 var logger = require('winston');
 var RRD = require('rrd').RRD;
 var Datafile = require('../lib/munin-datafile');
+var config = require('../config/config');
 
 var rrdUtils = {
     timeRanges : {
@@ -83,7 +84,7 @@ var rrdUtils = {
 }
 
 var rrd = function(req, res){
-    var rrd = new RRD('./datafiles/'+req.params[0]);
+    var rrd = new RRD(config.get('datafiles')+'/'+req.params[0]);
     logger.log("info", "rrd:%s", req.params[0]);
     var timeRange = rrdUtils.getTimeRange(req.query['timeRange']);
     var endDate = rrdUtils.getEndDate(req.query['startdatetime']);
@@ -115,18 +116,19 @@ var rrd = function(req, res){
 }
 
 var datagroups = function(req, res){
-    Datafile.getJson(require('path').dirname(require.main.filename)+'/datafiles/datafile', false, function(err, result){
+    Datafile.getJson(config.get('datafiles')+'/datafile', false, function(err, result){
         res.send(Object.keys(result));
     })
 }
 
 var dataopts = function(req, res){
+    logger.log('info','base datafiles:%s',config.get('datafiles'));
     if (req.query.format == 'selectopts'){
-        Datafile.getSelectopts(require('path').dirname(require.main.filename)+'/datafiles/datafile', false, function(err, result){
+        Datafile.getSelectopts(config.get('datafiles')+'/datafile', false, function(err, result){
             res.send(result[req.params.group]);
         })
     } else {
-        Datafile.getJson(require('path').dirname(require.main.filename)+'/datafiles/datafile', false, function(err, result){
+        Datafile.getJson(config.get('datafiles')+'/datafile', false, function(err, result){
             res.send(result[req.params.group]);
         })
     }

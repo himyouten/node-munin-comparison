@@ -82,7 +82,7 @@
 		var fetchData = function(rrddatafile, type) {
 			return $.ajax({ // It's necessary to return ajax call 
 				type: 'GET',
-				url: '/data/rrd/'+rrddatafile,
+				url: '/data/rrd'+rrddatafile,
 				data: {timeRange: type},
 				dataType: 'json',
 		    }).done(function(json){
