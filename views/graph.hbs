@@ -36,7 +36,7 @@
 
 		var flotGraph = $("#flot-graph");
 
-		flotGraph.bind("plotselected", function (event, ranges) {
+		flotGraph.on("plotselected", function (event, ranges) {
 			$.each(plot.getXAxes(), function(_, axis) {
 				var opts = axis.options;
 				opts.min = ranges.xaxis.from;
@@ -56,7 +56,7 @@
 			opacity: 0.80
 		}).appendTo("body");
 
-		flotGraph.bind("plothover", function (event, pos, item) {
+		flotGraph.on("plothover", function (event, pos, item) {
 			if (item) {
 				var x = item.datapoint[0].toFixed(2),
 					y = item.datapoint[1].toFixed(2);
@@ -104,6 +104,13 @@
 			});
 		}
 
+		var rdddataSelect = function(e){ 
+			var select = "#rrddata-selected option[value='"+e.val+"']";
+			if ($("#rrddata-selected option[value='"+e.val+"']").length == 0){
+				$('#rrddata-selected').append($("<option></option>").attr("value",e.val).text(e.object.text));
+			}
+		};
+
 		var setRRDDataSelection = function(datafile){
 			datafile.sort(function(a,b){
 				if (a.text < b.text)
@@ -113,9 +120,10 @@
 				  return 0;
 			});
 			// rrdddata selection
+			$("#rrddata").prop('disabled', false);
 			// set up select2, on change, add to selected
 			$('#rrddata-empty').hide();
-			$("#rrddata").select2({ placeholder: "Select a data series", data: datafile});
+			var rrdataSelect2 = $("#rrddata").select2({ placeholder: "Select a data series", data: datafile}).on('select2-selecting', rdddataSelect);
 		}
 		
 		var getRRDDataSelection = function(e){
@@ -124,41 +132,74 @@
 			if (val == undefined || val.length == 0){
 				return;
 			}
+			// disable while we update
+			$("#rrddata").prop('disabled', true);
 			$.getJSON('/data/dataopts/list/'+val+'?format=selectopts').done(setRRDDataSelection);
+		}
+		
+		var getRRDDataHost = function(e){
+			var optionSelected = $(e.target).find("option:selected");
+			var val = optionSelected.val();
+			if (val == undefined || val.length == 0){
+				val = '_all';
+			}
+			// disable while we update
+			$("#rrddata-hosts").prop('disabled', true);
+			$.getJSON('/data/dataopts/hosts/'+val+'?format=selectopts').done(setRRDDataHost);
 		}
 		
 		var setRRDDataGroup = function(groups){
 			groups.sort();
-			$('#rrddata-group').append($("<option>Make a selection</option>"));
+			$('#rrddata-group').append($("<option>Any group</option>"));
 			for (id in groups){
 				$('#rrddata-group').append($("<option></option>").attr("value",groups[id]).text(groups[id]));
 			}
-			$('#rrddata-group').on('change', getRRDDataSelection);
+			$("#rrddata-group").prop('disabled', false);
+		}
+		
+		var setRRDDataHost = function(hosts){
+			hosts.sort();
+			// clear out old values
+			$('#rrddata-host option').remove();
+			$('#rrddata-host').append($("<option>Choose a host</option>"));
+			for (id in hosts){
+				$('#rrddata-host').append($("<option></option>").attr("value",hosts[id]).text(hosts[id]));
+			}
+			$('#rrddata-host').prop('disabled', false);
 		}
 
 		// graph range type
 		// set Day as default
 		$('#graph-range-type-group label:first-child').button("toggle");
 		// on change make, redraw
-		$('#graph-range-type-group input').bind('change', graphData);
+		$('#graph-range-type-group input').on('change', graphData);
+
+		// group dropdown
+		$('#rrddata-group').prop('disabled', true);
+		$('#rrddata-group').on('change', getRRDDataHost);
+
+		// host dropdown
+		$('#rrddata-host').prop('disabled', true);
+		$('#rrddata-host').on('change', getRRDDataSelection);
 		
 		// bind change - use flot-graph namespace in case of conflict
-		$("#rrddata").bind('change.flot-graph', function(){ 
-			var data = $("#rrddata").select2("data");
-			$('#rrddata-selected').append($("<option></option>").attr("value",data.id).text(data.text));
-		});
+		$('#rrddata').prop('disabled', true);
+		
 		// remove from selected
-		$("#rrddata-remove-btn").bind('click', function(){
+		$("#rrddata-remove-btn").on('click', function(){
 			$('#rrddata-selected option:checked').remove();
 		});
 		// clear selected
-		$("#rrddata-clear-btn").bind('click', function(){
+		$("#rrddata-clear-btn").on('click', function(){
 			$('#rrddata-selected option').remove();
 		});
 		// get the dataopts and enable
 		$.getJSON('/data/dataopts/groups').done(setRRDDataGroup);
+
+		// get the dataopts and enable
+		$.getJSON('/data/dataopts/hosts/_all').done(setRRDDataHost);
 		
-		$('#graph-btn').bind('click', graphData);
+		$('#graph-btn').on('click', graphData);
 		
   });
 </script>
@@ -185,11 +226,15 @@
 	<p></p>
 	<form id="rrddata-form">
 		<div class="col-sm-5">
-			<div class="form-group">
+			<div class="form-group col-sm-6">
 				<label for="rrddata"><h3>Group</h3></label>
 				<select class="form-control" id="rrddata-group"></select>
 			</div>
-			<div class="form-group">
+			<div class="form-group col-sm-6">
+				<label for="rrddata"><h3>Host</h3></label>
+				<select class="form-control" id="rrddata-host"></select>
+			</div>
+			<div class="form-group col-sm-12">
 				<label for="rrddata"><h3>Metric</h3></label>
 				<input type="hidden" id="rrddata" class="form-control"/>
 				<select id="rrddata-empty" class="form-control"></select>

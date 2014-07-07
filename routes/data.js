@@ -117,11 +117,59 @@ var rrd = function(req, res){
 
 var datagroups = function(req, res){
     Datafile.getJson(config.get('datafiles')+'/datafile', false, function(err, result){
-        res.send(Object.keys(result));
+        var groups = [];
+        var keys = Object.keys(result);
+        for (var i = 0; i < keys.length; i++) {
+            if (keys[i].substring(0,1) == "_"){
+                continue;
+            }
+            groups.push(keys[i]);
+        }        
+        res.send(groups);
+    })
+}
+
+var datahosts = function(req, res){
+    Datafile.getJson(config.get('datafiles')+'/datafile', false, function(err, result){
+        // get all hosts
+        if (req.params.group == '_all'){
+            var allhosts = [];
+            for (group in result){
+                var hosts = Object.keys(result[group]);
+                allhosts = allhosts.concat(hosts);
+            }
+            // get uniques
+            allhosts = allhosts.filter(function(itm,i,a){
+                return i==a.indexOf(itm);
+            });
+            res.send(allhosts);
+        } else {
+            res.send(Object.keys(result[req.params.group]));
+        }
     })
 }
 
 var dataopts = function(req, res){
+    logger.log('info','base datafiles:%s',config.get('datafiles'));
+    if (req.query.format == 'selectopts'){
+        Datafile.getSelectopts(config.get('datafiles')+'/datafile', false, function(err, result){
+            res.send(result._host[req.params.host]);
+        })
+    } else {
+        Datafile.getJson(config.get('datafiles')+'/datafile', false, function(err, result){
+            var group = result._hosts[req.params.host];
+            logger.log('info', 'group:%s for %s', group, req.params.host);
+            if (group != undefined && group.length > 0){
+                res.send(result[group][req.params.host]);
+            } else {
+                logger.log('info', 'host:%s not found', req.params.host);
+                res.send(400, {error: 'none found'});
+            }
+        })
+    }
+}
+
+var dataoptsByGroup = function(req, res){
     logger.log('info','base datafiles:%s',config.get('datafiles'));
     if (req.query.format == 'selectopts'){
         Datafile.getSelectopts(config.get('datafiles')+'/datafile', false, function(err, result){
@@ -138,3 +186,4 @@ exports.rrdUtils = rrdUtils;
 exports.rrd = rrd;
 exports.dataopts = dataopts;
 exports.datagroups = datagroups;
+exports.datahosts = datahosts;

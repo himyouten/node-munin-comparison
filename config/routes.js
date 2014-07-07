@@ -14,8 +14,11 @@ module.exports.load = function(app){
     app.all('/graph', site.graph);
     app.all(/^\/data\/rrd\/(.+)/, data.rrd);
     app.all('/data/dataopts/groups', data.datagroups);
-    app.all('/data/dataopts/list/:group', data.dataopts);
+    app.all('/data/dataopts/hosts/:group', data.datahosts);
+    app.all('/data/dataopts/list/:host', data.dataopts);
 
+    app.use(error.notFound);
+    
     app.use(error.logErrors);
     app.use(error.clientErrorHandler);
     app.use(error.errorHandler);
