@@ -1,5 +1,9 @@
 var logger = require('winston');
 
+exports.notFound = function(req, res, next){
+  res.send(404, 'Sorry cant find that!');
+}
+
 exports.logErrors = function(err, req, res, next) {
   logger.log("error", err.stack);
   next(err);
