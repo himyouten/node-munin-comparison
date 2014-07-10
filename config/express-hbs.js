@@ -1,8 +1,10 @@
+var logger = require('winston');
 var path = require('path');
 var express = require('express');
 var app = express();
 var hbs = require('express-hbs');
 var rootdir = require('path').dirname(require.main.filename);
+logger.log('info',"main filename:%s", require.main.filename);
 // set up static
 app.use("/public", express.static(rootdir + '/public'));
 

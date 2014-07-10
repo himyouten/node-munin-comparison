@@ -24,6 +24,7 @@ munin rrd data format:
 
 **/
 var logger = require('winston');
+var fs = require('fs');
 var RRD = require('rrd').RRD;
 var Datafile = require('../lib/munin-datafile');
 var config = require('../config/config');
@@ -83,7 +84,18 @@ var rrdUtils = {
     }
 }
 
-var rrd = function(req, res){
+var rrd = function(req,res){
+    var rrdfile = config.get('datafiles')+'/'+req.params[0];
+    fs.exists(config.get('datafiles')+'/'+req.params[0], function(exists){
+        if (exists){
+            fetchRRD(req, res);
+        } else {
+            res.send(400, {error: 'none found'});
+        }
+    })
+}
+
+var fetchRRD = function(req, res){
     var rrd = new RRD(config.get('datafiles')+'/'+req.params[0]);
     logger.log("info", "rrd:%s", req.params[0]);
     var timeRange = rrdUtils.getTimeRange(req.query['timeRange']);

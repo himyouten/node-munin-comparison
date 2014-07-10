@@ -69,7 +69,7 @@
 			}
 		});
 
-		var data = [];
+		var data = {};
 
 		var plot = $.plot(flotGraph, data, options);
 
@@ -86,21 +86,25 @@
 				data: {timeRange: type},
 				dataType: 'json',
 		    }).done(function(json){
-				data.push(json);
+				data[rrddatafile] = json;
 			});
 		}
 		// render the graph
 		var graphData = function(){
 			// for each selected series, fetch data and then plot graph
-			data = [];
+			data = {};
 			var calls = [];
 			var type = getGraphRangeType();
 			$('#rrddata-selected option').each(function(){
 				calls.push(fetchData($(this).val(), type));
 			});
-			// make all calls - wait for it to return...
+			// make all calls - wait for them to return...
 			$.when.apply($, calls ).then(function() {
-				plot = $.plot("#flot-graph", data, options);
+				var sortedData = [];
+				$('#rrddata-selected option').each(function(){
+					sortedData.push(data[$(this).val()]);
+				});
+				plot = $.plot("#flot-graph", sortedData, options);
 			});
 		}
 
