@@ -33,3 +33,40 @@ body {
 .rrddata-actions {
     padding-top: 61px;
 }
+
+#rrddata-selected-group div.checkbox {
+    margin-top: 6px;
+}
+
+#rrddata-form .legend-marker {
+    padding: 1px 1px 1px 1px;
+    border: 1px solid #CCC;
+    margin-top: 1px;
+    margin-bottom: 0px;
+    margin-right: 5px;
+    display: inline-block;
+    float: left;
+}
+
+#rrddata-form .legend-marker span {
+    width: 13px;
+    display: inline-block;
+    padding: 2px;
+    background-color: #DDD;
+    min-height: 13px;
+    margin: 0;
+    float: left;
+}
+
+.template-rrddata-selected {
+    display: none;
+}
+
+#flot-tooltip {
+	position: absolute;
+	display: none;
+	border: 1px solid #fdd;
+	padding: 2px;
+	background-color: #fee;
+	opacity: 0.80;
+}

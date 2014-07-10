@@ -32,6 +32,9 @@
 				borderWidth: 1,
 				borderColor: '#DDD'
 			},
+			legend: {
+				show: false,
+			}
 		};
 
 		var flotGraph = $("#flot-graph");
@@ -47,22 +50,15 @@
 			plot.clearSelection();
 		});
 
-		$("<div id='tooltip'></div>").css({
-			position: "absolute",
-			display: "none",
-			border: "1px solid #fdd",
-			padding: "2px",
-			"background-color": "#fee",
-			opacity: 0.80
-		}).appendTo("body");
+		$("<div id='flot-tooltip'></div>").appendTo("body");
 
 		flotGraph.on("plothover", function (event, pos, item) {
 			if (item) {
 				var x = item.datapoint[0].toFixed(2),
 					y = item.datapoint[1].toFixed(2);
 				x = new Date(item.datapoint[0]).toISOString();
-				$("#tooltip").html(item.series.label + " of " + x + " = " + y)
-					.css({top: item.pageY+5, left: item.pageX+5})
+				$("#flot-tooltip").html(item.series.label + " <br/> " + x + " <br/> " + y)
+					.css({top: item.pageY+5, left: item.pageX+5, 'background-color': item.series.color})
 					.fadeIn(200);
 			} else {
 				$("#tooltip").hide();
@@ -95,24 +91,59 @@
 			data = {};
 			var calls = [];
 			var type = getGraphRangeType();
-			$('#rrddata-selected option').each(function(){
+			$('#rrddata-selected input:checked').each(function(){
 				calls.push(fetchData($(this).val(), type));
 			});
 			// make all calls - wait for them to return...
 			$.when.apply($, calls ).then(function() {
 				var sortedData = [];
-				$('#rrddata-selected option').each(function(){
+				$('#rrddata-selected input:checked').each(function(){
 					sortedData.push(data[$(this).val()]);
 				});
 				plot = $.plot("#flot-graph", sortedData, options);
+				$('#rrddata-selected label.legend-marker span').each(function(){
+					$(this).css('background-color','#DDD');
+				});
+				var series = plot.getData();
+				var i = 0;
+				$('#rrddata-selected input:checked').each(function(){
+					var label = $(this).parent();
+					var marker = label.prev();
+					var legendSpan = marker.find('span');
+					legendSpan.css('background-color', series[i].color);
+					i++;
+				});
 			});
+		}
+		
+		var cleanDatafileId = function(id){
+			return id.replace(/\//g,'_');
+		}
+		
+		var rrddataSelectedCheckbox = function(id, name){
+			var checkbox = '<div class="checkbox" id="rrddata-selected-'+cleanDatafileId(id)+'"> \
+				<label class="legend-marker" for="rrddata-selected-'+cleanDatafileId(id)+'-chk"><span></span></label> \
+			  <label> \
+			    <input id="rrddata-selected-'+cleanDatafileId(id)+'-chk" type="checkbox" checked="checked" value="'+id+'"></input> \
+				'+name+' \
+			  </label> \
+			</div>';
+			return $(checkbox);
 		}
 
 		var rdddataSelect = function(e){ 
-			var select = "#rrddata-selected option[value='"+e.val+"']";
-			if ($("#rrddata-selected option[value='"+e.val+"']").length == 0){
-				$('#rrddata-selected').append($("<option></option>").attr("value",e.val).text(e.object.text));
+			var cleanId = cleanDatafileId(e.val);
+			var found = false;
+			$('#rrddata-selected').find('div').each(function(){
+				if ($(this).attr('id') == 'rrddata-selected-'+cleanId){
+					found = true;
+					return false;
+				}
+			});
+			if (found){
+				return;
 			}
+			$('#rrddata-selected').append(rrddataSelectedCheckbox(e.val, e.object.text));
 		};
 
 		var setRRDDataSelection = function(datafile){
@@ -191,11 +222,11 @@
 		
 		// remove from selected
 		$("#rrddata-remove-btn").on('click', function(){
-			$('#rrddata-selected option:checked').remove();
+			$('#rrddata-selected input:checked').parent().parent().remove();
 		});
 		// clear selected
 		$("#rrddata-clear-btn").on('click', function(){
-			$('#rrddata-selected option').remove();
+			$('#rrddata-selected div').remove();
 		});
 		// get the dataopts and enable
 		$.getJSON('/data/dataopts/groups').done(setRRDDataGroup);
@@ -246,7 +277,8 @@
 		</div>
 		<div class="form-group col-sm-5">
 			<label for="rrddata"><h3>Selected</h3></label>
-			<select class="form-control" id="rrddata-selected"  multiple="multiple" size="8"></select>
+			<div id="rrddata-selected" class="well">
+			</div>
 		</div>
 		<div class="form-group col-sm-2 rrddata-actions">
 			<button class="btn btn-default btn-block" type="button" id="graph-btn"><span class="glyphicon glyphicon-signal"></span> Graph</button>
@@ -254,4 +286,12 @@
 			<button class="btn btn-default btn-block" type="button" id="rrddata-clear-btn"><span class="glyphicon glyphicon-ban-circle"></span> Clear</button>
 		</div>
 	</form>
+
+	<div class="checkbox template-rrddata-selected">
+		<label class="legend-marker"><span></span></label>
+	  <label>
+	    <input type="checkbox"/>
+	  </label>
+	</div>
+	
 </div>
